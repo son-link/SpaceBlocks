@@ -8,6 +8,25 @@ SpaceBlocks is a simple puzzle game. The goal is complete the lines to eliminate
 
 ![Screenshot](screenshot.png)
 
+## Instalation:
+
+### Linux:
+You need donwload **Löve** 0.9.0 or newer from official web and compile or, is avaliable, from the repositories of your GNU/Linux distro. For example on **Archlinux**: `pacman -S love`
+
+Open a terminal and run `love path/to/EntroPipes.love` or `love path/to/EntroPipesFolder/`
+
+Other trick is create a custom executable:
+
+`cat /usr/bin/love EntroPipes.love > entropipes`
+
+### Windows:
+Simply download the zip, unzip and double click on **EntroPipes.exe**
+
+[Windows 32 bits](https://dl.dropboxusercontent.com/u/58286032/juegos/SpaceBlocks/SpaceBlocks-win32.zip)
+
+[Windows 64 bits](https://dl.dropboxusercontent.com/u/58286032/juegos/SpaceBlocks/SpaceBlocks-win64.zip)
+
+
 ##Controls:
 
 **Left and right keys:** move the ship
@@ -18,11 +37,13 @@ SpaceBlocks is a simple puzzle game. The goal is complete the lines to eliminate
 
 **P:** Play/pause
 
-##Downloads:
+##Other credits:
 
-[Windows 32 bits](https://dl.dropboxusercontent.com/u/58286032/juegos/PuzzleBlock/PuzzleBlock-r1-win32.zip)
+* **BGM Music:** **World Nap**, from the album **Cor Metallicum** by [**Ozzed**](http://ozzed.net) and under Creative Commons BY-SA license
 
-[Windows 64 bits](https://dl.dropboxusercontent.com/u/58286032/juegos/PuzzleBlock/PuzzleBlock-r1-win64.zip)
+* Sounds effects generated with the online tool [**As3sfxr**](http://www.superflashbros.net/as3sfxr/)
+
+* Space ship created using [Modular Ships template](http://opengameart.org/content/modular-ships) by [Surt](http://opengameart.org/users/surt) and under CC0 license (Public Domain)
 
 [Source Code](https://github.com/son-link/SpaceBlocks)
 

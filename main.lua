@@ -50,7 +50,7 @@ function love.load()
 	if love.window.setTitle then
 		-- Not implementd on LövePotion
 		love.window.setTitle('SpaceBlocks')
-		love.window.setIcon(love.image.newImageData('img/block.png'))
+		love.window.setIcon(love.image.newImageData('img/player.png'))
 	end
 	--love.keyboard.setKeyRepeat(true)
 	-- set font
