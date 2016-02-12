@@ -29,7 +29,7 @@ Simply download the zip, unzip and double click on **EntroPipes.exe**
 
 ##Controls:
 
-**Left and right keys:** move the ship
+**Left and right keys:** Select ship on the title screen/move the ship on game
 
 **Space:** shot or start new game
 
@@ -44,6 +44,8 @@ Simply download the zip, unzip and double click on **EntroPipes.exe**
 * Sounds effects generated with the online tool [**As3sfxr**](http://www.superflashbros.net/as3sfxr/)
 
 * Space ship created using [Modular Ships template](http://opengameart.org/content/modular-ships) by [Surt](http://opengameart.org/users/surt) and under CC0 license (Public Domain)
+
+* Explosion animate is make use the **explosion set 1 m484 games** by [Master484](http://m484games.ucoz.com/) and under CC0 license (Public Domain)
 
 [Source Code](https://github.com/son-link/SpaceBlocks)
 

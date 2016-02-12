@@ -1,5 +1,5 @@
 --[[
-	SpaceBlocks r1
+	SpaceBlocks r2
 	© 2016 Alfonso Saavedra "Son Link"
 	Under the GNU/GPL 3 license
 	Source Code -> https://github.com/son-link/SpaceBlocks
@@ -12,8 +12,8 @@ ifWin = true -- For check if the player complete the puzzle
 math.randomseed(os.time())
 
 blocksLines = {}
-startX = 0
-startY = 16
+startX = 16
+startY = 0
 
 lostLiveY = 320
 waitResetGame = 3
@@ -21,18 +21,21 @@ explosion_pos = nil
 explosion_count = 0
 exploDelay = 0.2
 
-playerPos = 7
+playerPos = 6
 
 newLineAt = 5
 level = 1
 newLevelAt = 30
-levelUpY = -80
+bigFontY = -80
 nlPause = 2
 
 scoreText = "SCORE"
 score = 0
 topScore = 0
 cursorY = 0
+ifNewGame = false
+
+selectedShip = 0
 
 if love.filesystem.exists('topscore.txt') then
 	contents = love.filesystem.read('topscore.txt')
@@ -50,26 +53,27 @@ function love.load()
 	if love.window.setTitle then
 		-- Not implementd on LövePotion
 		love.window.setTitle('SpaceBlocks')
-		love.window.setIcon(love.image.newImageData('img/player.png'))
+		love.window.setIcon(love.image.newImageData('SpaceBlocks.png'))
 	end
 	--love.keyboard.setKeyRepeat(true)
 	-- set font
 	font = love.graphics.newFont('PixelOperator8.ttf', 10)
 	love.graphics.setFont(font)
 	
-	levelUpFont = love.graphics.newFont('PixelOperator8.ttf', 22)
-	--love.graphics.setFont(font)
+	bigFont = love.graphics.newFont('PixelOperator8.ttf', 20)
 	
-	block = love.graphics.newImage('img/block.png')
-	player = love.graphics.newImage('img/player.png')
-	cursor = love.graphics.newImage('img/cursor.png')
+	-- Asset
+	asset = love.graphics.newImage('img/asset.png')
+	info = love.graphics.newQuad(0, 0, 64, 16, asset:getDimensions())
+	block = love.graphics.newQuad(64, 0, 16, 16, asset:getDimensions())
+	player = love.graphics.newQuad(0, 16, 48, 32, asset:getDimensions())
+	cursor = love.graphics.newQuad(80, 0, 16, 16, asset:getDimensions())
+	
 	border = love.graphics.newImage('img/border.png')
 	limit_line = love.graphics.newImage('img/limit_line.png')
-	info = love.graphics.newImage('img/info.png')
 	
 	--Explosion sprites
-	explosion = love.graphics.newImage("img/explosion.png")
-	explosion_pos = love.graphics.newQuad(0, 0, 32, 32, explosion:getDimensions())
+	explosion_pos = love.graphics.newQuad(0, 64, 32, 32, asset:getDimensions())
 	
 	-- Sounds
 	bgm = love.audio.newSource('sounds/bgm.ogg')
@@ -77,12 +81,17 @@ function love.load()
 	
 	shotSound = love.audio.newSource('sounds/shot.wav', 'static')
 	exploSound = love.audio.newSource('sounds/explosion.wav', 'static')
-	
-	--shuffle(test)
 end
 
 function love.update(dt)
-	if lives == 0 then
+	if ifNewGame then
+		score = 0
+		resetGame()
+		lives = 4
+		newLineAt = 5
+		ifNewGame = false
+	end
+	if lives == 0 and gameState == 1 then
 		gameState = 4
 	end
 	if gameState == 1 then
@@ -112,7 +121,7 @@ function love.update(dt)
 			else
 				exploDelay = 0.2
 				l = 32 * explosion_count
-				explosion_pos = love.graphics.newQuad(l, 0, 32, 32, explosion:getDimensions())
+				explosion_pos = love.graphics.newQuad(l, 49, 32, 32, asset:getDimensions())
 				explosion_count = explosion_count + 1
 			end		
 		else
@@ -121,6 +130,7 @@ function love.update(dt)
 			lives = lives - 1
 		end
 	elseif gameState == 4 then
+		moveBigText(dt)
 		if score > topScore then
 			topScore = score
 			love.filesystem.write('topscore.txt', score)
@@ -130,21 +140,8 @@ function love.update(dt)
 		scoreText = 'HI-SCORE'
 	end
 	if newLevelAt == 0 and level < 10 then
-		bgm:stop()
 		gameState = 5
-		if levelUpY < 176 then
-			levelUpY = levelUpY + (dt * 50)
-		else
-			if nlPause > 0 then
-				nlPause = nlPause -dt
-			else
-				level = level + 1
-				newLevelAt = 30 + (10 * level)
-				levelUpY = -80
-				nlPause = 2
-				resetGame()
-			end
-		end
+		moveBigText(dt)
 	end
 end
 
@@ -155,7 +152,7 @@ function love.draw()
 			line = blocksLines[i]
 			for n=1,12 do
 				if line[n] == 1 then
-					love.graphics.draw(block, startX, startY)
+					love.graphics.draw(asset, block, startX, startY)
 				end
 				startX = startX + 16
 			end
@@ -163,8 +160,8 @@ function love.draw()
 			startX = 16
 		end
 		startY = 0
-		love.graphics.draw(player, (playerPos * 16) - 16, 432)
-		love.graphics.draw(cursor, (playerPos * 16), cursorY)
+		love.graphics.draw(asset, player, (playerPos * 16) - 16, 432)
+		love.graphics.draw(asset, cursor, (playerPos * 16), cursorY)
 	end
 	
 	-- Lateral game borders
@@ -181,10 +178,10 @@ function love.draw()
 	love.graphics.rectangle('fill', 232, 8, 80, 464)
 	
 	-- draw info blocks for score, lives and level
-	love.graphics.draw(info, 240, 32)
-	love.graphics.draw(info, 240, 72)
-	love.graphics.draw(info, 240, 112)
-	love.graphics.draw(info, 240, 152)
+	love.graphics.draw(asset, info, 240, 32)
+	love.graphics.draw(asset, info, 240, 72)
+	love.graphics.draw(asset, info, 240, 112)
+	love.graphics.draw(asset, info, 240, 152)
 	
 	-- Score, etc
 	love.graphics.setColor(0, 0, 0)
@@ -202,24 +199,26 @@ function love.draw()
 	
 	if gameState == 0 then
 		love.graphics.setColor(255, 255, 255)
-		love.graphics.setFont(levelUpFont)
-		love.graphics.printf('PRESS FIRE\nTO START', 0, 176, 224, 'center')
+		love.graphics.setFont(bigFont)
+		love.graphics.printf('SpaceBlocks', 0, 176, 224, 'center')
 		love.graphics.setFont(font)
+		love.graphics.printf('Select ship with left and right arrow keys and press FIRE to start', 16, 224, 192, 'center')
+		love.graphics.draw(asset, player, (playerPos * 16) - 16, 432)
 	elseif gameState == 2 then
 		--love.graphics.setColor(0, 0, 255)
 		love.graphics.printf('PAUSE', 0, 176, 304, 'right')
 	elseif gameState == 3 then
 		love.graphics.setColor(255, 255, 255)
-		love.graphics.draw(explosion, explosion_pos, (playerPos * 16) - 8, 432)
+		love.graphics.draw(asset, explosion_pos, (playerPos * 16) - 8, 432)
 	elseif gameState == 4 then
-		--love.graphics.setColor(255, 255, 255)
-		--love.graphics.draw(lostLive ,0, 0)
-		love.graphics.setColor(0, 0, 0)
-		love.graphics.printf('GAME\nOVER', 0, 208, 304, 'right')
+		love.graphics.setColor(255, 255, 255)
+		love.graphics.setFont(bigFont)
+		love.graphics.printf('GAME\nOVER', 0, bigFontY, 224, 'center')
+		love.graphics.setFont(font)
 	elseif gameState == 5 then
 		love.graphics.setColor(255, 255, 255)
-		love.graphics.setFont(levelUpFont)
-		love.graphics.printf('LEVEL\nUP', 0, levelUpY, 224, 'center')
+		love.graphics.setFont(bigFont)
+		love.graphics.printf('LEVEL\nCOMPLETE', 0, levelUpFont, 224, 'center')
 		love.graphics.setFont(font)
 	end
 end
@@ -236,20 +235,55 @@ function love.keypressed(key)
 	elseif key == 'space' then
 		if gameState == 0 then
 			gameState = 1
+			ifNewGame = true
 		elseif gameState == 1 then
 			shot()
-		elseif gameState == 4 then
-			resetGame()
-			lives = 4
-			newLineAt = 5
 		end
-	elseif gameState == 1 then
-		if key == 'left' and playerPos > 1 then
+	elseif key == 'left' then 
+		if gameState == 1 and playerPos > 1 then
 			playerPos = playerPos - 1
-		elseif key == 'right' and playerPos < 12 then
-			playerPos = playerPos + 1
+		elseif gameState == 0 then
+			if selectedShip == 0 then
+				selectedShip = 3
+			else
+				selectedShip = selectedShip - 1
+			end
 		end
-		setCursorPos()
+	elseif key == 'right' then
+		if gameState == 1 and playerPos < 12 then
+			playerPos = playerPos + 1
+		elseif gameState == 0 then
+			if selectedShip == 3 then
+				selectedShip = 0
+			else
+				selectedShip = selectedShip + 1
+			end
+		end
+	end
+	player = love.graphics.newQuad(48 * selectedShip, 16, 48, 32, asset:getDimensions())
+	setCursorPos()
+end
+
+function moveBigText(dt)
+	bgm:stop()
+	if bigFontY < 176 then
+		bigFontY = bigFontY + (dt * 50)
+	else
+		if nlPause > 0 then
+			nlPause = nlPause -dt
+		else
+			if gameState == 4 then
+				gameState = 0
+				bigFontY = -80
+				nlPause = 2
+			elseif gameState == 5 then
+				level = level + 1
+				newLevelAt = 30 + (10 * level)
+				bigFontY = -80
+				nlPause = 2
+				resetGame()
+			end
+		end
 	end
 end
 
@@ -374,13 +408,12 @@ function checkLines()
 end
 
 function resetGame()
-	playerPos = 5
+	playerPos = 6
 	blocksLines = {}
 	gameState = 1
 	moveLostAt = 0.1
 	lostLiveY = 320
 	setCursorPos()
 	newLineAt = 5 - ((level - 1) * 0.5)
-	print(newLineAt)
 	nlPause = 5
 end
