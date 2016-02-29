@@ -13,14 +13,14 @@ SpaceBlocks is a simple puzzle game. The goal is complete the lines to eliminate
 ### Linux:
 You need donwload **Löve** 0.9.0 or newer from official web and compile or, is avaliable, from the repositories of your GNU/Linux distro. For example on **Archlinux**: `pacman -S love`
 
-Open a terminal and run `love path/to/EntroPipes.love` or `love path/to/EntroPipesFolder/`
+Open a terminal and run `love path/to/SpaceBlocks.love` or `love path/to/SpaceBlocksFolder/`
 
 Other trick is create a custom executable:
 
-`cat /usr/bin/love EntroPipes.love > entropipes`
+`cat /usr/bin/love SpaceBlocks.love > spaceblocks`
 
 ### Windows:
-Simply download the zip, unzip and double click on **EntroPipes.exe**
+Simply download the zip, unzip and double click on **SpaceBlocks.exe**
 
 [Windows 32 bits](https://dl.dropboxusercontent.com/u/58286032/juegos/SpaceBlocks/SpaceBlocks-win32.zip)
 
