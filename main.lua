@@ -1,13 +1,14 @@
 --[[
-	SpaceBlocks r2
-	© 2016 Alfonso Saavedra "Son Link"
+	SpaceBlocks r4
+	© 2016 - 2020 Alfonso Saavedra "Son Link"
 	Under the GNU/GPL 3 license
 	Source Code -> https://github.com/son-link/SpaceBlocks
 	My blog (on Spanish) -> http://son-link.github.io
 ]]
 
-gameState = 0 -- 0: Main screen, 1: playing, 2: paused, 3: lost live, 4: game over, 5: level up
-ifWin = true -- For check if the player complete the puzzle
+gameState = 0 -- 0: Main screen, 1: playing, 2: paused, 3: lost live, 4: game over, 5: level up, 6: confirm exit
+prevState = 0
+local quit = true
 
 math.randomseed(os.time())
 
@@ -37,7 +38,7 @@ ifNewGame = false
 
 selectedShip = 0
 
-if love.filesystem.exists('topscore.txt') then
+if love.filesystem.getInfo('topscore.txt') then
 	contents = love.filesystem.read('topscore.txt')
 	topScore = tonumber(contents)
 end
@@ -48,14 +49,10 @@ function love.load()
 	love.window.setMode(320, 480, {resizable=false, centered=true})
 	love.graphics.setBackgroundColor(0,0,0)
 	
-	-- Set repeat keys
+	love.window.setTitle('SpaceBlocks')
+	love.window.setIcon(love.image.newImageData('SpaceBlocks.png'))
+	
 	love.keyboard.setKeyRepeat(true)
-	if love.window.setTitle then
-		-- Not implementd on LövePotion
-		love.window.setTitle('SpaceBlocks')
-		love.window.setIcon(love.image.newImageData('SpaceBlocks.png'))
-	end
-	--love.keyboard.setKeyRepeat(true)
 	-- set font
 	font = love.graphics.newFont('PixelOperator8.ttf', 10)
 	love.graphics.setFont(font)
@@ -69,18 +66,26 @@ function love.load()
 	player = love.graphics.newQuad(0, 16, 48, 32, asset:getDimensions())
 	cursor = love.graphics.newQuad(80, 0, 16, 16, asset:getDimensions())
 	
-	border = love.graphics.newImage('img/border.png')
+	hborder = love.graphics.newImage('img/hborder.png')
+	hborder:setWrap('repeat', 'repeat')
+	
 	limit_line = love.graphics.newImage('img/limit_line.png')
 	
 	--Explosion sprites
 	explosion_pos = love.graphics.newQuad(0, 64, 32, 32, asset:getDimensions())
 	
 	-- Sounds
-	bgm = love.audio.newSource('sounds/bgm.ogg')
+	bgm = love.audio.newSource('sounds/bgm.ogg', 'static')
 	bgm:setLooping(true)
 	
-	shotSound = love.audio.newSource('sounds/shot.wav', 'static')
+	shotSound = love.audio.newSource('sounds/shot2.wav', 'static')
 	exploSound = love.audio.newSource('sounds/explosion.wav', 'static')
+	
+	p1joystick = nil
+end
+
+function love.joystickadded(joystick)
+	p1joystick = joystick
 end
 
 function love.update(dt)
@@ -95,7 +100,7 @@ function love.update(dt)
 		gameState = 4
 	end
 	if gameState == 1 then
-		if bgm:isStopped() then
+		if not bgm:isPlaying() then
 			bgm:play()
 		end
 		
@@ -108,7 +113,7 @@ function love.update(dt)
 			end
 		else
 			gameState = 3
-			newLineAt = 5 / level
+			newLineAt = 5 - 0.4
 		end
 	elseif gameState == 3 then
 		bgm:stop()
@@ -121,7 +126,7 @@ function love.update(dt)
 			else
 				exploDelay = 0.2
 				l = 32 * explosion_count
-				explosion_pos = love.graphics.newQuad(l, 49, 32, 32, asset:getDimensions())
+				explosion_pos = love.graphics.newQuad(l, 64, 32, 32, asset:getDimensions())
 				explosion_count = explosion_count + 1
 			end		
 		else
@@ -135,6 +140,11 @@ function love.update(dt)
 			topScore = score
 			love.filesystem.write('topscore.txt', score)
 		end
+		
+	elseif gameState == 6 or gameState == 2 then
+		if bgm:isPlaying() then
+			bgm:stop()
+		end
 	end
 	if score > topScore then
 		scoreText = 'HI-SCORE'
@@ -143,6 +153,10 @@ function love.update(dt)
 		gameState = 5
 		moveBigText(dt)
 	end
+	--[[]if p1joystick ~=nil then
+		anyDown = p1joystick:isGamepadDown( 'dpleft' )
+		print(anyDown)
+	end]]
 end
 
 function love.draw()
@@ -153,6 +167,7 @@ function love.draw()
 			for n=1,12 do
 				if line[n] == 1 then
 					love.graphics.draw(asset, block, startX, startY)
+					love.graphics.draw(asset, cursor, (playerPos * 16), cursorY)
 				end
 				startX = startX + 16
 			end
@@ -161,15 +176,16 @@ function love.draw()
 		end
 		startY = 0
 		love.graphics.draw(asset, player, (playerPos * 16) - 16, 432)
-		love.graphics.draw(asset, cursor, (playerPos * 16), cursorY)
 	end
 	
 	-- Lateral game borders
-	love.graphics.draw(border, 13, 2)
-	love.graphics.draw(border, 209, 2)
+	bgQuad = love.graphics.newQuad(0, 0, 2, 384 , 2, 16)
+	love.graphics.draw(hborder, bgQuad, 13, 2)
+	love.graphics.draw(hborder, bgQuad, 209, 2)
 	
 	-- Limit line
 	love.graphics.draw(limit_line, 0, 397)
+	
 	
 	--for rigt border
 	love.graphics.setColor(164, 100, 34)
@@ -200,9 +216,9 @@ function love.draw()
 	if gameState == 0 then
 		love.graphics.setColor(255, 255, 255)
 		love.graphics.setFont(bigFont)
-		love.graphics.printf('SpaceBlocks', 0, 176, 224, 'center')
+		love.graphics.printf('SpaceBlocks', 0, 144, 224, 'center')
 		love.graphics.setFont(font)
-		love.graphics.printf('Select ship with left and right arrow keys and press FIRE to start', 16, 224, 192, 'center')
+		love.graphics.printf('Select ship with left and right arrow keys and press FIRE to start', 16, 192, 192, 'center')
 		love.graphics.draw(asset, player, (playerPos * 16) - 16, 432)
 	elseif gameState == 2 then
 		--love.graphics.setColor(0, 0, 255)
@@ -218,9 +234,18 @@ function love.draw()
 	elseif gameState == 5 then
 		love.graphics.setColor(255, 255, 255)
 		love.graphics.setFont(bigFont)
-		love.graphics.printf('LEVEL\nCOMPLETE', 0, levelUpFont, 224, 'center')
+		love.graphics.printf('LEVEL\nCOMPLETE', 0, bigFontY, 224, 'center')
+		love.graphics.setFont(font)
+	elseif gameState == 6 then
+		love.graphics.setColor(255, 255, 255)
+		love.graphics.setFont(bigFont)
+		love.graphics.printf('Are yoy sure?\nYes/No', 16, 192, 192, 'center')
 		love.graphics.setFont(font)
 	end
+end
+
+function love.joystickpressed(joystick,button)
+	anyDown = joystick:isGamepadDown( 'dpleft' )
 end
 
 function love.keypressed(key)
@@ -228,10 +253,12 @@ function love.keypressed(key)
 		if gameState == 1 then
 			gameState = 2
 		elseif gameState == 2 then
-			gameState = 0
+			gameState = 1
 		end
 	elseif key == "escape" then
-		love.event.quit()
+		prevState = gameState
+		gameState = 6
+		--love.event.quit()
 	elseif key == 'space' then
 		if gameState == 0 then
 			gameState = 1
@@ -260,8 +287,28 @@ function love.keypressed(key)
 			end
 		end
 	end
+	if gameState == 6 then
+		if key == 'y' then
+			quit = false
+			love.event.quit()
+		elseif key == 'n' then
+			gameState = prevState
+			quit = true
+		end
+	end
 	player = love.graphics.newQuad(48 * selectedShip, 16, 48, 32, asset:getDimensions())
 	setCursorPos()
+end
+
+function love.quit()
+	print (quit)
+	if quit then
+		gameState = 6
+		quit = false
+	else
+		return quit
+	end
+	return true
 end
 
 function moveBigText(dt)
@@ -414,6 +461,6 @@ function resetGame()
 	moveLostAt = 0.1
 	lostLiveY = 320
 	setCursorPos()
-	newLineAt = 5 - ((level - 1) * 0.5)
+	newLineAt = 5 - ((level - 1) * 0.4)
 	nlPause = 5
 end
